@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react';
-import axios from 'axios';
 import { AuthContext } from '../store/AuthContext';
+import { apiClient } from '../api/client';
 
 export const useAuthViewModel = () => {
   const context = useContext(AuthContext);
@@ -24,21 +24,13 @@ export const useAuthViewModel = () => {
     setIsLoggingIn(true);
     try {
       // Basic test to see if URL is valid
-      const baseUrl = serverUrl.endsWith('/') ? serverUrl.slice(0, -1) : serverUrl;
-      const config: any = { timeout: 10000 };
+      const testClient = apiClient;
+      testClient.defaults.baseURL = serverUrl.endsWith('/') ? serverUrl.slice(0, -1) : serverUrl;
       if (username && password) {
-        config.auth = { username, password };
+        testClient.defaults.auth = { username, password };
       }
 
-      console.log(`Requesting URL: ${baseUrl}/api/version`);
-      const headers = { ...config.headers };
-      if (config.auth) {
-        headers.Authorization = 'Basic (hidden)';
-      }
-      console.log(`Headers:`, headers);
-
-      const response = await axios.get(`${baseUrl}/api/version`, config);
-      console.log(`Response Status: ${response.status}`);
+      await testClient.get('/api/version');
 
       // If success, save
       await context.login(serverUrl, username, password);
