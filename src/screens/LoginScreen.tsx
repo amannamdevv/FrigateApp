@@ -1,73 +1,80 @@
-import React from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { TextInput, Button, Text, HelperText, useTheme } from 'react-native-paper';
-import { useAuthViewModel } from '../viewmodels/useAuthViewModel';
+import React, { useState } from 'react';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { TextInput, Button, Text, useTheme, Surface } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-export const LoginScreen = () => {
-  const {
-    serverUrl,
-    setServerUrl,
-    username,
-    setUsername,
-    password,
-    setPassword,
-    error,
-    isLoggingIn,
-    handleLogin,
-  } = useAuthViewModel();
+export const LoginScreen = ({ navigation }: any) => {
   const theme = useTheme();
+  const [serverUrl, setServerUrl] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = () => {
+    // Navigate to the main app flow
+    navigation.replace('MainApp');
+  };
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <KeyboardAvoidingView 
+      style={[styles.container, { backgroundColor: theme.colors.background }]} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text variant="displaySmall" style={{ color: theme.colors.primary }}>Frigate NVR</Text>
-          <Text variant="titleMedium" style={{ color: theme.colors.onSurface }}>Login to your server</Text>
+      <View style={styles.content}>
+        <View style={styles.logoContainer}>
+          <Icon name="cctv" size={80} color={theme.colors.primary} />
+          <Text style={[styles.title, { color: theme.colors.onBackground }]}>Frigate</Text>
+          <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>Centralized NVR Dashboard</Text>
         </View>
 
-        <TextInput
-          label="Server URL (e.g., http://192.168.1.100:5000)"
-          value={serverUrl}
-          onChangeText={setServerUrl}
-          autoCapitalize="none"
-          keyboardType="url"
-          style={styles.input}
-          mode="outlined"
-        />
+        <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={4}>
+          <TextInput
+            label="Server URL"
+            value={serverUrl}
+            onChangeText={setServerUrl}
+            mode="outlined"
+            style={styles.input}
+            left={<TextInput.Icon icon="server" />}
+            autoCapitalize="none"
+            placeholder="http://frigate.local:5000"
+          />
+          <TextInput
+            label="Username"
+            value={username}
+            onChangeText={setUsername}
+            mode="outlined"
+            style={styles.input}
+            left={<TextInput.Icon icon="account" />}
+            autoCapitalize="none"
+          />
+          <TextInput
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            mode="outlined"
+            secureTextEntry
+            style={styles.input}
+            left={<TextInput.Icon icon="lock" />}
+          />
+          
+          <Button 
+            mode="contained" 
+            onPress={handleLogin} 
+            style={styles.button}
+            contentStyle={styles.buttonContent}
+            icon="login"
+          >
+            Connect to Server
+          </Button>
 
-        <TextInput
-          label="Username (Optional)"
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-          style={styles.input}
-          mode="outlined"
-        />
-
-        <TextInput
-          label="Password (Optional)"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          style={styles.input}
-          mode="outlined"
-        />
-
-        {error ? <HelperText type="error" visible={!!error}>{error}</HelperText> : null}
-
-        <Button
-          mode="contained"
-          onPress={handleLogin}
-          loading={isLoggingIn}
-          disabled={isLoggingIn}
-          style={styles.button}
-        >
-          Connect
-        </Button>
-      </ScrollView>
+          <Button 
+            mode="text" 
+            onPress={handleLogin} 
+            style={styles.skipButton}
+          >
+            Skip for Demo
+          </Button>
+        </Surface>
+      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -76,20 +83,40 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 24,
+  content: {
+    flex: 1,
     justifyContent: 'center',
+    padding: 24,
   },
-  header: {
+  logoContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 48,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginTop: 16,
+    letterSpacing: 1,
+  },
+  subtitle: {
+    fontSize: 16,
+    marginTop: 8,
+  },
+  card: {
+    padding: 24,
+    borderRadius: 16,
   },
   input: {
     marginBottom: 16,
   },
   button: {
-    marginTop: 24,
-    paddingVertical: 6,
+    marginTop: 8,
+    borderRadius: 8,
   },
+  buttonContent: {
+    paddingVertical: 8,
+  },
+  skipButton: {
+    marginTop: 16,
+  }
 });

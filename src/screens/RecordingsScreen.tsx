@@ -4,7 +4,7 @@ import { useTheme, Text, Appbar } from 'react-native-paper';
 import { useRecordingsViewModel } from '../viewmodels/useRecordingsViewModel';
 import { CardComponent } from '../components/CardComponent';
 
-export const RecordingsScreen = () => {
+export const RecordingsScreen = ({ navigation }: any) => {
   const theme = useTheme();
   const { recordings, loading, error, refetch } = useRecordingsViewModel();
 
@@ -22,8 +22,11 @@ export const RecordingsScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Appbar.Header style={{ backgroundColor: theme.colors.surface }}>
-        <Appbar.Content title="Recordings" color={theme.colors.onSurface} />
+      <Appbar.Header style={{ backgroundColor: theme.colors.surface, elevation: 4 }}>
+        {/* We assume Recordings is not the root screen, so it gets a back button */}
+        <Appbar.BackAction onPress={() => navigation.goBack()} color={theme.colors.onSurface} />
+        <Appbar.Content title="Recordings" titleStyle={{ textAlign: 'center', fontWeight: 'bold' }} color={theme.colors.onSurface} />
+        <Appbar.Action icon="video-library" onPress={() => {}} color={theme.colors.onSurface} />
       </Appbar.Header>
 
       {error ? (

@@ -1,83 +1,109 @@
-import React, { useContext } from 'react';
-import { View, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
-import { useTheme, Text, Appbar } from 'react-native-paper';
-import { useEventsViewModel } from '../viewmodels/useEventsViewModel';
-import { CardComponent } from '../components/CardComponent';
-import { AuthContext } from '../store/AuthContext';
+import React from 'react';
+import { View, StyleSheet, FlatList } from 'react-native';
+import { Appbar, useTheme, Text, Surface, Avatar } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-export const EventsScreen = () => {
+const MOCK_EVENTS = [
+  { id: '1', title: 'Person Detected', time: '10:45 AM', camera: 'Front Yard', type: 'person', severity: 'high' },
+  { id: '2', title: 'Vehicle Detected', time: '09:30 AM', camera: 'Driveway', type: 'car', severity: 'medium' },
+  { id: '3', title: 'Motion Detected', time: '08:15 AM', camera: 'Backyard', type: 'motion', severity: 'low' },
+  { id: '4', title: 'Person Detected', time: '07:50 AM', camera: 'Side Gate', type: 'person', severity: 'high' },
+  { id: '5', title: 'Camera Disconnected', time: '02:00 AM', camera: 'Garage', type: 'system', severity: 'critical' },
+];
+
+export const EventsScreen = ({ navigation }: any) => {
   const theme = useTheme();
-  const { events, loading, error, refetch } = useEventsViewModel();
-  const auth = useContext(AuthContext);
 
-  const getThumbnailUrl = (eventId: string) => {
-    return `${auth?.serverUrl}/api/events/${eventId}/thumbnail.jpg`;
+  const getIconForType = (type: string) => {
+    switch(type) {
+      case 'person': return 'walk';
+      case 'car': return 'car';
+      case 'system': return 'alert';
+      default: return 'motion-sensor';
+    }
   };
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleString();
+  const getColorForSeverity = (severity: string) => {
+    switch(severity) {
+      case 'critical': return theme.colors.error;
+      case 'high': return '#e67e22';
+      case 'medium': return '#f1c40f';
+      default: return theme.colors.primary;
+    }
   };
 
-  if (loading && events.length === 0) {
-    return (
-      <View style={[styles.centered, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+  const renderEvent = ({ item }: { item: any }) => (
+    <Surface style={[styles.eventCard, { backgroundColor: theme.colors.surface }]} elevation={1}>
+      <View style={[styles.iconContainer, { backgroundColor: getColorForSeverity(item.severity) + '20' }]}>
+        <Icon name={getIconForType(item.type)} size={24} color={getColorForSeverity(item.severity)} />
       </View>
-    );
-  }
+      <View style={styles.eventInfo}>
+        <Text style={[styles.eventTitle, { color: theme.colors.onSurface }]}>{item.title}</Text>
+        <View style={styles.eventMeta}>
+          <Icon name="cctv" size={14} color={theme.colors.onSurfaceVariant} style={{ marginRight: 4 }} />
+          <Text style={[styles.eventCamera, { color: theme.colors.onSurfaceVariant }]}>{item.camera}</Text>
+        </View>
+      </View>
+      <View style={styles.eventTimeContainer}>
+        <Text style={[styles.eventTime, { color: theme.colors.onSurfaceVariant }]}>{item.time}</Text>
+        <Icon name="chevron-right" size={20} color={theme.colors.onSurfaceVariant} style={{ marginTop: 4 }} />
+      </View>
+    </Surface>
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Appbar.Header style={{ backgroundColor: theme.colors.surface }}>
-        <Appbar.Content title="Events" color={theme.colors.onSurface} />
+      <Appbar.Header style={{ backgroundColor: theme.colors.surface, elevation: 4 }}>
+        <Appbar.Action icon="bell" color={theme.colors.primary} size={28} />
+        <Appbar.Content title="Events" titleStyle={styles.headerTitle} color={theme.colors.onSurface} />
+        <Appbar.Action icon="magnify" onPress={() => {}} color={theme.colors.onSurface} />
       </Appbar.Header>
 
-      {error ? (
-        <View style={styles.errorContainer}>
-           <Text style={{ color: theme.colors.error }}>{error}</Text>
-        </View>
-      ) : null}
-
       <FlatList
-        data={events}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <CardComponent
-            title={`${item.label} on ${item.camera}`}
-            subtitle={`Time: ${formatDate(item.start_time)} | Score: ${Math.round(item.top_score * 100)}%`}
-            imageUrl={item.has_snapshot ? getThumbnailUrl(item.id) : undefined}
-            onPress={() => console.log('Event pressed', item.id)}
-          />
-        )}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={refetch} />}
+        data={MOCK_EVENTS}
+        keyExtractor={item => item.id}
+        renderItem={renderEvent}
         contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          !loading ? <Text style={styles.emptyText}>No events found.</Text> : null
-        }
       />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
+  container: { flex: 1 },
+  headerTitle: { textAlign: 'center', fontWeight: 'bold' },
+  listContent: { padding: 16 },
+  eventCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  errorContainer: {
     padding: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+  },
+  iconContainer: {
+    padding: 12,
+    borderRadius: 12,
+    marginRight: 16,
+  },
+  eventInfo: {
+    flex: 1,
+  },
+  eventTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  eventMeta: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  listContent: {
-    paddingBottom: 16,
+  eventCamera: {
+    fontSize: 14,
   },
-  emptyText: {
-    textAlign: 'center',
-    marginTop: 32,
-    color: '#888',
+  eventTimeContainer: {
+    alignItems: 'flex-end',
+  },
+  eventTime: {
+    fontSize: 12,
   }
 });
