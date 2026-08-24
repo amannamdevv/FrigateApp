@@ -1,33 +1,29 @@
-import { useState, useEffect, useCallback } from 'react';
-import { FrigateEvent } from '../models/types';
-import { frigateApi } from '../api/frigateApi';
+/**
+ * Events (Call Alerts) ViewModel - uses real AIVMS API
+ */
+import { useState, useCallback } from 'react';
+import { aivmsApi, CallAlert, DashboardStats } from '../api/frigateApi';
 
 export const useEventsViewModel = () => {
-  const [events, setEvents] = useState<FrigateEvent[]>([]);
+  const [alerts, setAlerts] = useState<CallAlert[]>([]);
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+  const [count24h, setCount24h] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     setError(null);
-    try {
-      const data = await frigateApi.getEvents({ limit: 50 });
-      setEvents(data);
-    } catch (e: any) {
-      setError(e?.message || 'Failed to fetch events');
-    } finally {
-      setLoading(false);
+    const result = await aivmsApi.getDashboardStats();
+    if (result?.call_alerts) {
+      setAlerts(result.call_alerts.recent);
+      setStatusCounts(result.call_alerts.status_counts);
+      setCount24h(result.call_alerts.count_24h);
+    } else {
+      setError('Failed to fetch call alerts');
     }
+    setLoading(false);
   }, []);
 
-  useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
-
-  return {
-    events,
-    loading,
-    error,
-    refetch: fetchEvents,
-  };
+  return { alerts, statusCounts, count24h, loading, error, fetchEvents };
 };

@@ -1,33 +1,27 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Camera } from '../models/types';
-import { frigateApi } from '../api/frigateApi';
+/**
+ * Camera list ViewModel - uses real AIVMS API
+ */
+import { useState, useCallback } from 'react';
+import { aivmsApi, Camera, CamerasResponse } from '../api/frigateApi';
 
 export const useCamerasViewModel = () => {
   const [cameras, setCameras] = useState<Camera[]>([]);
+  const [summary, setSummary] = useState<CamerasResponse['summary'] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchCameras = useCallback(async () => {
     setLoading(true);
     setError(null);
-    try {
-      const data = await frigateApi.getCameras();
-      setCameras(data);
-    } catch (e: any) {
-      setError(e?.message || 'Failed to fetch cameras');
-    } finally {
-      setLoading(false);
+    const result = await aivmsApi.getCameraList();
+    if (result) {
+      setCameras(result.cameras);
+      setSummary(result.summary);
+    } else {
+      setError('Failed to fetch cameras');
     }
+    setLoading(false);
   }, []);
 
-  useEffect(() => {
-    fetchCameras();
-  }, [fetchCameras]);
-
-  return {
-    cameras,
-    loading,
-    error,
-    refetch: fetchCameras,
-  };
+  return { cameras, summary, loading, error, fetchCameras };
 };

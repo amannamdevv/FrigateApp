@@ -21,6 +21,8 @@ import { AllDetectionsScreen } from './src/screens/AllDetectionsScreen';
 import { EventsScreen } from './src/screens/EventsScreen';
 import { RecordingsScreen } from './src/screens/RecordingsScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { SplashScreen } from './src/screens/SplashScreen';
+import { MediaViewerScreen } from './src/screens/MediaViewerScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -111,13 +113,15 @@ function App() {
       <PaperProvider theme={customDarkTheme}>
         <StatusBar barStyle="light-content" backgroundColor={customDarkTheme.colors.surface} />
         <NavigationContainer theme={navigationTheme}>
-          <Stack.Navigator initialRouteName="MainApp" screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+          <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+            <Stack.Screen name="Splash" component={SplashScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="MainApp" component={MainTabs} />
             <Stack.Screen name="CameraDetails" component={CameraDetailsScreen} />
             <Stack.Screen name="LiveView" component={LiveViewScreen} />
             <Stack.Screen name="AllDetections" component={AllDetectionsScreen} />
-            <Stack.Screen name="Recordings" component={RecordingsScreen} />
+            <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="MediaViewer" component={MediaViewerScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </PaperProvider>
