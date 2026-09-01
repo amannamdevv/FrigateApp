@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Text, Appbar, ActivityIndicator } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { aivmsApi, DashboardStats, CamerasResponse, getMediaUrl, Camera } from '../api/frigateApi';
 
 // ─── Open media helper ────────────────────────────────────────────────────────
@@ -20,14 +21,7 @@ const openMedia = (navigation: any, path: string | null, label: string) => {
 };
 
 // ─── Helper: format datetime ──────────────────────────────────────────────────
-const formatTime = (dateStr: string) => {
-  try {
-    const d = new Date(dateStr.replace(' ', 'T'));
-    return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-  } catch {
-    return dateStr;
-  }
-};
+const formatTime = (dateStr: string) => dateStr;
 
 // ─── Call Status Color/Icon ───────────────────────────────────────────────────
 const callStatusConfig: Record<string, { color: string; icon: string }> = {
@@ -48,10 +42,15 @@ const BigStatCard = ({
   title,
   value,
   sub,
+  iconFamily,
 }: any) => (
   <View style={[styles.bigStatCard, { borderLeftColor: iconColor }]}>
     <View style={[styles.bigStatIcon, { backgroundColor: iconBg }]}>
-      <Icon name={icon} size={26} color={iconColor} />
+      {iconFamily === 'FontAwesome' ? (
+        <FontAwesome name={icon} size={18} color={iconColor} />
+      ) : (
+        <Icon name={icon} size={20} color={iconColor} />
+      )}
     </View>
     <View style={styles.bigStatText}>
       <Text style={styles.bigStatValue}>{value}</Text>
@@ -62,10 +61,12 @@ const BigStatCard = ({
 );
 
 const StatusPill = ({ label, count, color }: any) => (
-  <View style={[styles.pill, { borderColor: color + '50', backgroundColor: color + '18' }]}>
+  <View style={[styles.pill, { borderColor: color + '40', backgroundColor: color + '15' }]}>
     <View style={[styles.pillDot, { backgroundColor: color }]} />
-    <Text style={[styles.pillText, { color }]} numberOfLines={1}>
-      {label}: <Text style={{ fontWeight: '700' }}>{count}</Text>
+    <Text style={styles.pillText} numberOfLines={1}>
+      <Text style={{ color: color }}>{label}</Text>
+      <Text style={{ color: '#6b7280' }}> : </Text>
+      <Text style={{ fontWeight: '800', color: '#111827' }}>{count}</Text>
     </Text>
   </View>
 );
@@ -88,6 +89,7 @@ export const DashboardScreen = ({ navigation }: any) => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [cameraSummary, setCameraSummary] = useState<CamerasResponse['summary'] | null>(null);
   const [cameras, setCameras] = useState<Camera[]>([]);
+  const [activeCameraFilter, setActiveCameraFilter] = useState<'Total' | 'Online' | 'Offline' | null>(null);
   const [recentCallAlerts, setRecentCallAlerts] = useState<any[]>([]);
   const [username, setUsername] = useState('Admin');
 
@@ -172,68 +174,74 @@ export const DashboardScreen = ({ navigation }: any) => {
       >
         {/* ── Camera Summary Row ── */}
         {cameraSummary && (
-          <View style={styles.cameraRow}>
-            <TouchableOpacity style={styles.camStat} onPress={() => navigation.navigate('Cameras')}>
-              <Text style={styles.camStatNum}>{cameraSummary.total}</Text>
-              <Text style={styles.camStatLabel}>Total</Text>
-            </TouchableOpacity>
-            <View style={styles.camDivider} />
-            <TouchableOpacity style={styles.camStat} onPress={() => navigation.navigate('Cameras')}>
-              <Text style={[styles.camStatNum, { color: '#22c55e' }]}>{cameraSummary.active}</Text>
-              <Text style={styles.camStatLabel}>Online</Text>
-            </TouchableOpacity>
-            <View style={styles.camDivider} />
-            <TouchableOpacity style={styles.camStat} onPress={() => navigation.navigate('Cameras')}>
-              <Text style={[styles.camStatNum, { color: '#ef4444' }]}>{cameraSummary.inactive}</Text>
-              <Text style={styles.camStatLabel}>Offline</Text>
-            </TouchableOpacity>
-            <View style={styles.camDivider} />
-            <View style={styles.camStat}>
-              <Icon name="camera-outline" size={20} color="#3b82f6" />
-              <Text style={[styles.camStatLabel, { marginTop: 2 }]}>Cameras</Text>
-            </View>
-          </View>
-        )}
-
-        {/* ── All Cameras List ── */}
-        {cameras.length > 0 && (
           <>
-            <SectionHeader
-              title="All Cameras"
-              onPress={() => navigation.navigate('Cameras')}
-              actionLabel="View Groups"
-            />
-            <View style={styles.card}>
-              {cameras.map((cam, idx) => {
-                const isActive = cam.is_active === 1;
-                return (
-                  <View key={`dash-cam-${cam.id}-${idx}`}>
-                    <TouchableOpacity
-                      style={styles.clipRow}
-                      activeOpacity={0.75}
-                      onPress={() => navigation.navigate('CameraDetails', { camera: cam })}
-                    >
-                      <View style={[styles.clipIconWrap, { backgroundColor: isActive ? '#22c55e15' : '#ef444415' }]}>
-                        <Icon name="cctv" size={22} color={isActive ? '#22c55e' : '#ef4444'} />
-                      </View>
-                      <View style={styles.clipInfo}>
-                        <Text style={styles.clipCamera} numberOfLines={1}>{cam.camera_name}</Text>
-                        <Text style={styles.clipTime} numberOfLines={1}>{cam.location || cam.site_code || 'Unknown Location'}</Text>
-                      </View>
-                      <View style={styles.clipBadges}>
-                        <View style={[styles.badge, { backgroundColor: isActive ? '#22c55e20' : '#ef444420' }]}>
-                          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: isActive ? '#22c55e' : '#ef4444', marginRight: 4 }} />
-                          <Text style={[styles.badgeText, { color: isActive ? '#22c55e' : '#ef4444' }]}>
-                            {isActive ? 'Online' : 'Offline'}
-                          </Text>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-                    {idx < cameras.length - 1 && <View style={styles.divider} />}
-                  </View>
-                );
-              })}
+            <View style={styles.cameraRow}>
+              <TouchableOpacity
+                style={[styles.camStat, activeCameraFilter === 'Total' && styles.camStatActive]}
+                onPress={() => setActiveCameraFilter(prev => prev === 'Total' ? null : 'Total')}
+              >
+                <Text style={styles.camStatNum}>{cameraSummary.total}</Text>
+                <Text style={styles.camStatLabel}>Total</Text>
+              </TouchableOpacity>
+              <View style={styles.camDivider} />
+              <TouchableOpacity
+                style={[styles.camStat, activeCameraFilter === 'Online' && styles.camStatActive]}
+                onPress={() => setActiveCameraFilter(prev => prev === 'Online' ? null : 'Online')}
+              >
+                <Text style={[styles.camStatNum, { color: '#22c55e' }]}>{cameraSummary.active}</Text>
+                <Text style={styles.camStatLabel}>Online</Text>
+              </TouchableOpacity>
+              <View style={styles.camDivider} />
+              <TouchableOpacity
+                style={[styles.camStat, activeCameraFilter === 'Offline' && styles.camStatActive]}
+                onPress={() => setActiveCameraFilter(prev => prev === 'Offline' ? null : 'Offline')}
+              >
+                <Text style={[styles.camStatNum, { color: '#ef4444' }]}>{cameraSummary.inactive}</Text>
+                <Text style={styles.camStatLabel}>Offline</Text>
+              </TouchableOpacity>
+
             </View>
+
+            {/* ── Inline Expandable Cameras List ── */}
+            {activeCameraFilter && cameras.length > 0 && (
+              <View style={[styles.card, { marginTop: 12 }]}>
+                {cameras
+                  .filter(cam => {
+                    if (activeCameraFilter === 'Online') return cam.is_active === 1;
+                    if (activeCameraFilter === 'Offline') return cam.is_active === 0;
+                    return true;
+                  })
+                  .map((cam, idx, arr) => {
+                    const isActive = cam.is_active === 1;
+                    return (
+                      <View key={`dash-cam-${cam.id}-${idx}`}>
+                        <TouchableOpacity
+                          style={styles.clipRow}
+                          activeOpacity={0.75}
+                          onPress={() => navigation.navigate('CameraDetails', { camera: cam })}
+                        >
+                          <View style={[styles.clipIconWrap, { backgroundColor: isActive ? '#22c55e15' : '#ef444415' }]}>
+                            <Icon name="cctv" size={22} color={isActive ? '#22c55e' : '#ef4444'} />
+                          </View>
+                          <View style={styles.clipInfo}>
+                            <Text style={styles.clipCamera} numberOfLines={1}>{cam.camera_name}</Text>
+                            <Text style={styles.clipTime} numberOfLines={1}>{cam.location || cam.site_code || 'Unknown Location'}</Text>
+                          </View>
+                          <View style={styles.clipBadges}>
+                            <View style={[styles.badge, { backgroundColor: isActive ? '#22c55e20' : '#ef444420' }]}>
+                              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: isActive ? '#22c55e' : '#ef4444', marginRight: 4 }} />
+                              <Text style={[styles.badgeText, { color: isActive ? '#22c55e' : '#ef4444' }]}>
+                                {isActive ? 'Online' : 'Offline'}
+                              </Text>
+                            </View>
+                          </View>
+                        </TouchableOpacity>
+                        {idx < arr.length - 1 && <View style={styles.divider} />}
+                      </View>
+                    );
+                  })}
+              </View>
+            )}
           </>
         )}
 
@@ -259,15 +267,16 @@ export const DashboardScreen = ({ navigation }: any) => {
         </View>
         <View style={styles.bigStatRow}>
           <BigStatCard
-            icon="send"
-            iconColor="#a78bfa"
-            iconBg="#a78bfa15"
+            icon="telegram"
+            iconFamily="FontAwesome"
+            iconColor="#3b82f6"
+            iconBg="#3b82f615"
             title="Telegram Clips"
             value={tgClips?.count_24h ?? '—'}
             sub="Last 24 hours"
           />
           <BigStatCard
-            icon="video-check"
+            icon="video"
             iconColor="#f97316"
             iconBg="#f9731615"
             title="img+video"
@@ -334,7 +343,7 @@ export const DashboardScreen = ({ navigation }: any) => {
           <>
             <SectionHeader
               title="Recent WhatsApp Clips"
-              onPress={() => navigation.navigate('Recordings')}
+              onPress={() => navigation.navigate('Recordings', { initialTab: 'whatsapp' })}
               actionLabel="View All"
             />
             <View style={styles.card}>
@@ -367,7 +376,7 @@ export const DashboardScreen = ({ navigation }: any) => {
                           onPress={() => openMedia(navigation, clip.img_path, 'Image')}
                           disabled={!hasImg}
                         >
-                          <Icon name={hasImg ? 'image-check' : 'image-off'} size={11} color={hasImg ? '#22c55e' : '#ef4444'} style={{ marginRight: 3 }} />
+                          <Icon name={hasImg ? 'image' : 'image-off'} size={11} color={hasImg ? '#22c55e' : '#ef4444'} style={{ marginRight: 3 }} />
                           <Text style={[styles.badgeText, { color: hasImg ? '#22c55e' : '#ef4444' }]}>IMG</Text>
                         </TouchableOpacity>
                         {/* Video badge */}
@@ -376,12 +385,69 @@ export const DashboardScreen = ({ navigation }: any) => {
                           onPress={() => openMedia(navigation, clip.clip_path, 'Video')}
                           disabled={!hasVid}
                         >
-                          <Icon name={hasVid ? 'play-circle' : 'video-off'} size={11} color={hasVid ? '#3b82f6' : '#ef4444'} style={{ marginRight: 3 }} />
-                          <Text style={[styles.badgeText, { color: hasVid ? '#3b82f6' : '#ef4444' }]}>VID</Text>
+                          <Icon name={hasVid ? 'video' : 'video-off'} size={11} color={hasVid ? '#22c55e' : '#ef4444'} style={{ marginRight: 3 }} />
+                          <Text style={[styles.badgeText, { color: hasVid ? '#22c55e' : '#ef4444' }]}>VID</Text>
                         </TouchableOpacity>
                       </View>
                     </TouchableOpacity>
                     {idx < Math.min(waClips.recent.length, 5) - 1 && <View style={styles.divider} />}
+                  </View>
+                );
+              })}
+            </View>
+          </>
+        )}
+
+        {/* ── Recent Telegram Clips ── */}
+        {tgClips && tgClips.recent.length > 0 && (
+          <>
+            <SectionHeader
+              title="Recent Telegram Clips"
+              onPress={() => navigation.navigate('Recordings', { initialTab: 'telegram' })}
+              actionLabel="View All"
+            />
+            <View style={styles.card}>
+              {tgClips.recent.slice(0, 5).map((clip, idx) => {
+                const hasImg = clip.img_status === 'sent' || clip.img_status === 'found';
+                const hasVid = clip.vid_status === 'sent' || clip.vid_status === 'found';
+                return (
+                  <View key={`tg-${clip.event_id}-${idx}`}>
+                    <TouchableOpacity
+                      style={styles.clipRow}
+                      activeOpacity={0.75}
+                      onPress={() => {
+                        if (hasVid) openMedia(navigation, clip.clip_path, 'Video');
+                        else if (hasImg) openMedia(navigation, clip.img_path, 'Image');
+                        else Alert.alert('Not available', 'No media for this event.');
+                      }}
+                    >
+                      <View style={styles.clipIconWrap}>
+                        <FontAwesome name="telegram" size={20} color="#3b82f6" />
+                      </View>
+                      <View style={styles.clipInfo}>
+                        <Text style={styles.clipCamera} numberOfLines={1}>{clip.camera}</Text>
+                        <Text style={styles.clipTime}>{formatTime(clip.event_time)}</Text>
+                      </View>
+                      <View style={styles.clipBadges}>
+                        <TouchableOpacity
+                          style={[styles.badge, { backgroundColor: hasImg ? '#3b82f620' : '#ef444420' }]}
+                          onPress={() => openMedia(navigation, clip.img_path, 'Image')}
+                          disabled={!hasImg}
+                        >
+                          <Icon name={hasImg ? 'image' : 'image-off'} size={11} color={hasImg ? '#3b82f6' : '#ef4444'} style={{ marginRight: 3 }} />
+                          <Text style={[styles.badgeText, { color: hasImg ? '#3b82f6' : '#ef4444' }]}>IMG</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.badge, { backgroundColor: hasVid ? '#3b82f620' : '#ef444420', marginLeft: 5 }]}
+                          onPress={() => openMedia(navigation, clip.clip_path, 'Video')}
+                          disabled={!hasVid}
+                        >
+                          <Icon name={hasVid ? 'video' : 'video-off'} size={11} color={hasVid ? '#3b82f6' : '#ef4444'} style={{ marginRight: 3 }} />
+                          <Text style={[styles.badgeText, { color: hasVid ? '#3b82f6' : '#ef4444' }]}>VID</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </TouchableOpacity>
+                    {idx < Math.min(tgClips.recent.length, 5) - 1 && <View style={styles.divider} />}
                   </View>
                 );
               })}
@@ -397,8 +463,8 @@ export const DashboardScreen = ({ navigation }: any) => {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' }, // Light gray bg
-  appbar: { backgroundColor: '#ffffff', elevation: 2, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
+  container: { flex: 1, backgroundColor: '#ffffff' }, // Pure white background
+  appbar: { backgroundColor: '#ffffff', elevation: 2, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
   appbarLeft: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   appbarTitle: { color: '#135d9d', fontSize: 20, fontWeight: '800' }, // Shroti Blue
   appbarSub: { color: '#6b7280', fontSize: 13, fontWeight: '500' },
@@ -415,19 +481,20 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: '#f3f4f6',
     paddingVertical: 18,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  camStat: { flex: 1, alignItems: 'center' },
+  camStat: { flex: 1, alignItems: 'center', borderRadius: 8, paddingVertical: 4 },
+  camStatActive: { backgroundColor: '#f3f4f6' },
   camStatNum: { fontSize: 26, fontWeight: '800', color: '#111827' },
   camStatLabel: { fontSize: 13, color: '#4b5563', marginTop: 4, fontWeight: '500' },
-  camDivider: { width: 1, height: 40, backgroundColor: '#e5e7eb' },
+  camDivider: { width: 1, height: 40, backgroundColor: '#f3f4f6' },
 
   // Section header
   sectionHeader: {
@@ -442,28 +509,28 @@ const styles = StyleSheet.create({
   sectionAction: { fontSize: 15, color: '#135d9d', fontWeight: '700' },
 
   // Big stat cards
-  bigStatRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 12, marginBottom: 12 },
+  bigStatRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 10, marginBottom: 10 },
   bigStatCard: {
     flex: 1,
     backgroundColor: '#ffffff',
-    borderRadius: 16,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderLeftWidth: 4,
-    padding: 16,
+    borderLeftWidth: 3,
+    padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  bigStatIcon: { width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  bigStatIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
   bigStatText: { flex: 1 },
-  bigStatValue: { fontSize: 28, fontWeight: '900', color: '#111827' },
-  bigStatTitle: { fontSize: 13, color: '#4b5563', marginTop: 2, fontWeight: '700' },
-  bigStatSub: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  bigStatValue: { fontSize: 20, fontWeight: '800', color: '#111827' },
+  bigStatTitle: { fontSize: 11, color: '#4b5563', marginTop: 1, fontWeight: '700' },
+  bigStatSub: { fontSize: 10, color: '#9ca3af', marginTop: 1 },
 
   // Status pills
   pillsRow: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 10 },
@@ -484,15 +551,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: '#f3f4f6',
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
     shadowRadius: 6,
-    elevation: 3,
+    elevation: 2,
   },
-  divider: { height: 1, backgroundColor: '#f3f4f6', marginHorizontal: 16 },
+  divider: { height: 1, backgroundColor: '#f9fafb', marginHorizontal: 16 },
 
   // Alert row
   alertRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14 },

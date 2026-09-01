@@ -99,7 +99,7 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Cameras" component={CamerasScreen} />
+      {/* <Tab.Screen name="Cameras" component={CamerasScreen} /> */}
       <Tab.Screen name="Events" component={EventsScreen} />
       <Tab.Screen name="Recordings" component={RecordingsScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />

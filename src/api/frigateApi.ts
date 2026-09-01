@@ -188,7 +188,7 @@ export const aivmsApi = {
    */
   getPaginatedClips: async (type: 'whatsapp' | 'telegram', page: number = 1, limit: number = 20): Promise<PaginatedClipsResponse | null> => {
     try {
-      const endpoint = type === 'whatsapp' 
+      const endpoint = type === 'whatsapp'
         ? `/api/shroti/dashboard-stats/whatsapp-clips?page=${page}&limit=${limit}`
         : `/api/shroti/dashboard-stats/telegram-clips?page=${page}&limit=${limit}`;
 
@@ -222,7 +222,7 @@ export const aivmsApi = {
       if (status) url += `&status=${encodeURIComponent(status)}`;
       if (startDate) url += `&start_date=${encodeURIComponent(startDate)}`;
       if (endDate) url += `&end_date=${encodeURIComponent(endDate)}`;
-      
+
       const response = await apiClient.get(url);
       return response.data;
     } catch (e) {

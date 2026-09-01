@@ -272,7 +272,7 @@ export const EventsScreen = ({ navigation }: any) => {
       </View>
 
       <FlatList
-        data={alerts}
+        data={statusFilter ? alerts.filter(a => a.call_status === statusFilter) : alerts}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => <AlertCard item={item} />}
         contentContainerStyle={styles.listContent}
@@ -325,7 +325,7 @@ export const EventsScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
+  container: { flex: 1, backgroundColor: '#ffffff' },
   appbar: { backgroundColor: '#ffffff', elevation: 2, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
   appbarTitle: { color: '#135d9d', fontSize: 20, fontWeight: '800' },
   appbarSub: { color: '#6b7280', fontSize: 13, fontWeight: '500' },

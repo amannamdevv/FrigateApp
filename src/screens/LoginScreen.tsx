@@ -42,10 +42,10 @@ export const LoginScreen = ({ navigation }: any) => {
   return (
     <View style={styles.container}>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-      
+
       {/* Absolute Background Image so keyboard doesn't squish it */}
       <Image
-        source={require('../assets/login_bg_zoomed.png')}
+        source={require('../assets/login_bg_final.jpg')}
         style={styles.bgImage}
         resizeMode="cover"
       />
@@ -54,35 +54,49 @@ export const LoginScreen = ({ navigation }: any) => {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Top Branding Section - Made very small and removed logo as requested */}
+          {/* Top Branding Section */}
           <View style={styles.topBranding}>
+            <Image
+              source={require('../assets/logo.png')}
+              style={styles.smallBrandLogo}
+              resizeMode="contain"
+            />
             <Text style={styles.brandTitleSmall}>Shroti Telecom Pvt. Ltd.</Text>
           </View>
 
-          {/* Main AIVMS Section */}
+          {/* Spacer to push AIVMS down (Reduced to move content up) */}
+          <View style={{ height: 20 }} />
+
+          {/* Main AIVMS Section with Logo */}
           <View style={styles.heroSection}>
+            <View style={styles.logoContainer}>
+              <View style={styles.whiteCircle}>
+                <Image
+                  source={require('../assets/logo.png')}
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </View>
             <View style={styles.heroCol}>
               <Text style={styles.heroTitle}>AIVMS</Text>
-              <Text style={styles.heroSideTextBelow}>AI Video Management System</Text>
+              <Text style={styles.heroSideTextBelow}>Artificial Intelligence Video Management System</Text>
             </View>
           </View>
 
-          {/* Spacer to push card down slightly depending on screen size */}
-          <View style={{ height: 20 }} />
+          {/* Spacer between Hero and Login Card */}
+          <View style={{ height: 30 }} />
 
           {/* Login Card */}
           <View style={styles.card}>
             <View style={styles.cardHeaderRow}>
-              <View style={styles.shieldIconBg}>
-                <Icon name="shield-check-outline" size={24} color="#135d9d" />
-              </View>
-              <View>
-                <Text style={styles.welcomeText}>Welcome Back!</Text>
+              <View style={{ alignItems: 'center' }}>
+                <Text style={styles.welcomeText}>Welcome to STPL</Text>
                 <Text style={styles.pleaseLoginText}>Please login to continue</Text>
               </View>
             </View>
@@ -109,6 +123,8 @@ export const LoginScreen = ({ navigation }: any) => {
                 underlineColor="transparent"
                 activeUnderlineColor="transparent"
                 textColor="#111827"
+                cursorColor="#0252a3"
+                selectionColor="rgba(2, 82, 163, 0.3)"
               />
             </View>
 
@@ -125,6 +141,8 @@ export const LoginScreen = ({ navigation }: any) => {
                 underlineColor="transparent"
                 activeUnderlineColor="transparent"
                 textColor="#111827"
+                cursorColor="#0252a3"
+                selectionColor="rgba(2, 82, 163, 0.3)"
               />
               <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
                 <Icon name={showPass ? 'eye-outline' : 'eye-off-outline'} size={20} color="#6b7280" />
@@ -149,6 +167,8 @@ export const LoginScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
+
+
           {/* Footer - Moved exactly to bottom with full width white bar */}
           <View style={styles.footerContainer}>
             <Text style={styles.footerCopyright}>© 2026 Shroti Telecom Private Limited. All Rights Reserved.</Text>
@@ -171,7 +191,6 @@ const styles = StyleSheet.create({
     height: height,
     top: 0,
     left: 0,
-    // Slightly shift image to left if it's too far right, or just use cover
   },
   scrollContent: {
     flexGrow: 1,
@@ -186,6 +205,12 @@ const styles = StyleSheet.create({
     marginBottom: 20, // Reduced since logo is gone
     paddingHorizontal: 24,
   },
+  smallBrandLogo: {
+    width: 24,
+    height: 24,
+    marginRight: 8,
+    borderRadius: 12, // Crops the square white background into a perfect circle
+  },
   brandTitleSmall: {
     fontSize: 11, // Very small text as requested
     fontWeight: '700',
@@ -196,17 +221,37 @@ const styles = StyleSheet.create({
 
   // Hero (Inset)
   heroSection: {
-    marginBottom: 40,
+    marginBottom: 20,
     paddingHorizontal: 24,
+  },
+  logoContainer: {
+    alignItems: 'center', // Center the logo horizontally
+    marginBottom: 16,
+    transform: [{ translateX: -60 }], // Shift logo further to the left
+  },
+  whiteCircle: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: 125, // Restored/slightly larger to keep icon big while clipping the extra white space
+    height: 125,
   },
   heroCol: {
     flexDirection: 'column',
     alignItems: 'flex-start',
+    marginLeft: 44, // Shifting AIVMS text a bit more to the right
+    maxWidth: 240, // Constrain width so the long text wraps before hitting the tower
   },
   heroTitle: {
     fontSize: 52,
     fontWeight: '900',
-    color: '#0252a3', 
+    color: '#0252a3',
     letterSpacing: -1,
   },
   heroSideTextBelow: {
@@ -220,19 +265,19 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 24,
-    padding: 24,
-    marginHorizontal: 24, // Added margin instead of container padding
+    padding: 20,
+    marginHorizontal: 32,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1, // slightly stronger shadow to pop off background
+    shadowOpacity: 0.1,
     shadowRadius: 20,
     elevation: 8,
-    marginBottom: 40, // Increased margin to push footer down
+    marginBottom: 40,
   },
   cardHeaderRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    justifyContent: 'center',
+    marginBottom: 20,
   },
   shieldIconBg: {
     width: 40,
@@ -305,7 +350,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8, 
+    marginTop: 8,
     shadowColor: '#0252a3',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -331,7 +376,7 @@ const styles = StyleSheet.create({
   },
   footerCopyright: {
     fontSize: 11,
-    color: '#475569', 
+    color: '#475569',
     fontWeight: '600',
     textAlign: 'center',
   },

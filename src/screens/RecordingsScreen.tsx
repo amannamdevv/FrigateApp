@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Appbar, Text, ActivityIndicator } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { aivmsApi, ClipEntry, getMediaUrl } from '../api/frigateApi';
 
 type TabType = 'whatsapp' | 'telegram';
@@ -61,7 +62,6 @@ const getMediaStatusColor = (status: string | null | undefined) => {
 
 // ─── Clip Card Component ──────────────────────────────────────────────────────
 const ClipCard = ({ item, type, navigation }: { item: ClipEntry; type: TabType; navigation: any }) => {
-  const { date, time } = fmtDate(item.event_time);
   const statusKey  = type === 'whatsapp' ? item.wa_status : item.tg_status;
   const numbers    = type === 'whatsapp' ? item.wa_numbers : item.tg_phone_numbers;
   const cfg        = getStatusCfg(statusKey);
@@ -84,33 +84,19 @@ const ClipCard = ({ item, type, navigation }: { item: ClipEntry; type: TabType; 
       </View>
 
 
-      {/* Media Status */}
-      <View style={styles.mediaRow}>
-        <View style={styles.mediaCol}>
-          <Text style={styles.mediaLabel}>Image</Text>
-          <View style={[styles.mediaBadge, { backgroundColor: getMediaStatusColor(item.img_status).bg }]}>
-            <Text style={[styles.mediaBadgeText, { color: getMediaStatusColor(item.img_status).text }]}>{item.img_status || 'N/A'}</Text>
-          </View>
-        </View>
-        <View style={styles.mediaCol}>
-          <Text style={styles.mediaLabel}>Video</Text>
-          <View style={[styles.mediaBadge, { backgroundColor: getMediaStatusColor(item.vid_status).bg }]}>
-            <Text style={[styles.mediaBadgeText, { color: getMediaStatusColor(item.vid_status).text }]}>{item.vid_status || 'N/A'}</Text>
-          </View>
-        </View>
-      </View>
+
 
       {/* Time */}
       <View style={styles.timeRow}>
-        <Icon name="clock-outline" size={12} color="#6b7280" />
-        <Text style={styles.timeText}> {date} • {time}</Text>
+        <Icon name="clock-outline" size={14} color="#6b7280" />
+        <Text style={styles.timeText}> {item.event_time}</Text>
       </View>
 
       {/* Numbers */}
       {!!numbers && (
         <View style={styles.numsRow}>
-          <Icon name={type === 'whatsapp' ? 'whatsapp' : 'send-outline'} size={12} color="#6b7280" />
-          <Text style={styles.numsText} numberOfLines={2}> {numbers.replace(/91/g, '+91 ').replace(/,/g, '\n')}</Text>
+          {type === 'whatsapp' ? <Icon name="whatsapp" size={15} color="#22c55e" style={{marginTop: 2}} /> : <FontAwesome name="telegram" size={14} color="#3b82f6" style={{marginTop: 2}} />}
+          <Text style={styles.numsText}> {numbers.replace(/91/g, '+91 ').replace(/,/g, ', ')}</Text>
         </View>
       )}
 
@@ -160,7 +146,7 @@ const CountChip = ({
     onPress={onPress}
     activeOpacity={0.75}
   >
-    <Text style={[styles.countChipNum, { color: selected ? color : '#e5e7eb' }]}>{count}</Text>
+    <Text style={[styles.countChipNum, { color: selected ? color : '#111827' }]}>{count}</Text>
     <Text style={[styles.countChipLabel, { color: selected ? color : '#6b7280' }]} numberOfLines={1}>
       {getStatusCfg(label).label || label}
     </Text>
@@ -168,8 +154,8 @@ const CountChip = ({
 );
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
-export const RecordingsScreen = ({ navigation }: any) => {
-  const [activeTab, setActiveTab]     = useState<TabType>('whatsapp');
+export const RecordingsScreen = ({ route, navigation }: any) => {
+  const [activeTab, setActiveTab]     = useState<TabType>(route.params?.initialTab || 'whatsapp');
   const [waClips, setWaClips]         = useState<ClipEntry[]>([]);
   const [tgClips, setTgClips]         = useState<ClipEntry[]>([]);
   const [waCounts, setWaCounts]       = useState<Record<string, number>>({});
@@ -332,15 +318,15 @@ export const RecordingsScreen = ({ navigation }: any) => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'telegram' && { borderBottomColor: '#a78bfa' }]}
+          style={[styles.tab, activeTab === 'telegram' && { borderBottomColor: '#3b82f6' }]}
           onPress={() => switchTab('telegram')}
         >
-          <Icon name="send" size={16} color={activeTab === 'telegram' ? '#a78bfa' : '#6b7280'} style={{ marginRight: 6 }} />
-          <Text style={[styles.tabText, activeTab === 'telegram' && { color: '#a78bfa' }]}>
+          <FontAwesome name="telegram" size={17} color={activeTab === 'telegram' ? '#3b82f6' : '#6b7280'} style={{ marginRight: 6 }} />
+          <Text style={[styles.tabText, activeTab === 'telegram' && { color: '#3b82f6' }]}>
             Telegram
           </Text>
-          <View style={[styles.tabBadge, { backgroundColor: activeTab === 'telegram' ? '#a78bfa20' : '#21262d' }]}>
-            <Text style={[styles.tabBadgeText, { color: activeTab === 'telegram' ? '#a78bfa' : '#6b7280' }]}>{tg24h}</Text>
+          <View style={[styles.tabBadge, { backgroundColor: activeTab === 'telegram' ? '#3b82f620' : '#21262d' }]}>
+            <Text style={[styles.tabBadgeText, { color: activeTab === 'telegram' ? '#3b82f6' : '#6b7280' }]}>{tg24h}</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -351,7 +337,7 @@ export const RecordingsScreen = ({ navigation }: any) => {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
             {/* "All" chip */}
             <CountChip
-              label=""
+              label="Total"
               count={total24h}
               color="#3b82f6"
               selected={statusFilter === null}
@@ -454,24 +440,21 @@ const styles = StyleSheet.create({
   // List
   listContent: { padding: 16, paddingBottom: 40 },
 
-  // Card
+  // ─── Card Styles ────────────────────────────────────────────────────────────
   card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    padding: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 10, shadowOffset: { width: 0, height: 4 },
     elevation: 3,
+    borderWidth: 1, borderColor: '#f3f4f6'
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 6,
   },
   camBadge: {
     flexDirection: 'row',
@@ -479,21 +462,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardCamera: {
-    fontSize: 16,
-    fontWeight: '900',
+    fontSize: 14,
+    fontWeight: '800',
     color: '#111827',
-    letterSpacing: 0.3,
     flex: 1,
   },
   statusChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
   },
   statusChipText: { fontSize: 11, fontWeight: '800' },
+
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  statusText: { fontSize: 11, fontWeight: '700' },
 
   // Meta rows
   mediaRow: { flexDirection: 'row', gap: 16, marginBottom: 14, marginTop: 4, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
@@ -502,21 +487,22 @@ const styles = StyleSheet.create({
   mediaBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   mediaBadgeText: { fontSize: 11, fontWeight: '800' },
 
-  timeRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  timeText: { fontSize: 13, color: '#4b5563', fontWeight: '500' },
-  numsRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 14, marginTop: 4 },
-  numsText: { fontSize: 13, color: '#6b7280', flex: 1, lineHeight: 20, fontWeight: '500' },
+  timeRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  timeText: { fontSize: 13, color: '#374151', fontWeight: '600', marginLeft: 4 },
+  numsRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6, marginTop: 2 },
+  numsText: { fontSize: 12, color: '#4b5563', flex: 1, lineHeight: 18, fontWeight: '500', marginLeft: 4 },
 
   // Action buttons
-  actionsRow: { flexDirection: 'row', gap: 10, marginTop: 14 },
+  actionsRow: { flexDirection: 'row', gap: 8, marginTop: 6 },
+  btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 8, borderRadius: 8 },
+  btnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   actionBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
     backgroundColor: '#ffffff',
     borderWidth: 1.5,
     borderColor: '#3b82f650',
