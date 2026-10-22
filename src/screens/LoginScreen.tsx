@@ -206,17 +206,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   smallBrandLogo: {
-    width: 24,
-    height: 24,
+    width: 26,
+    height: 26,
     marginRight: 8,
-    borderRadius: 12, // Crops the square white background into a perfect circle
+    borderRadius: 13, // Crops the square white background into a perfect circle
   },
   brandTitleSmall: {
-    fontSize: 11, // Very small text as requested
+    fontSize: 14, // Slightly enlarged as requested
     fontWeight: '700',
     color: '#0f172a',
-    opacity: 0.6, // Make it subtle
-    letterSpacing: 0.5,
+    opacity: 0.75, // Subtle yet readable
+    letterSpacing: 0.4,
   },
 
   // Hero (Inset)
