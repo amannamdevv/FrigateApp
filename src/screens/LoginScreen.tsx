@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,11 +8,18 @@ import {
   Image,
   Dimensions,
   ScrollView,
-  StatusBar
+  StatusBar,
+  Keyboard,
+  LayoutAnimation,
+  UIManager
 } from 'react-native';
 import { TextInput, Text, ActivityIndicator } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { aivmsApi } from '../api/frigateApi';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,6 +29,31 @@ export const LoginScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPass, setShowPass] = useState(false);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setKeyboardVisible(true);
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: 70, animated: true });
+      }, 100);
+    });
+
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
@@ -55,12 +87,16 @@ export const LoginScreen = ({ navigation }: any) => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          ref={scrollViewRef}
+          contentContainerStyle={[
+            styles.scrollContent,
+            isKeyboardVisible && { paddingBottom: 40, justifyContent: 'flex-start' }
+          ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           {/* Top Branding Section */}
-          <View style={styles.topBranding}>
+          <View style={[styles.topBranding, isKeyboardVisible && { marginBottom: 6 }]}>
             <Image
               source={require('../assets/logo.png')}
               style={styles.smallBrandLogo}
@@ -69,35 +105,46 @@ export const LoginScreen = ({ navigation }: any) => {
             <Text style={styles.brandTitleSmall}>Shroti Telecom Pvt. Ltd.</Text>
           </View>
 
-          {/* Spacer to push AIVMS down (Reduced to move content up) */}
-          <View style={{ height: 20 }} />
+          {/* Spacer to push AIVMS down */}
+          <View style={{ height: isKeyboardVisible ? 6 : 20 }} />
 
           {/* Main AIVMS Section with Logo */}
-          <View style={styles.heroSection}>
-            <View style={styles.logoContainer}>
-              <View style={styles.whiteCircle}>
+          <View style={[styles.heroSection, isKeyboardVisible && { marginBottom: 8 }]}>
+            <View style={[styles.logoContainer, isKeyboardVisible && styles.logoContainerCompact]}>
+              <View style={[styles.whiteCircle, isKeyboardVisible && styles.whiteCircleCompact]}>
                 <Image
                   source={require('../assets/logo.png')}
-                  style={styles.logoImage}
+                  style={[styles.logoImage, isKeyboardVisible && styles.logoImageCompact]}
                   resizeMode="contain"
                 />
               </View>
             </View>
             <View style={styles.heroCol}>
-              <Text style={styles.heroTitle}>AIVMS</Text>
-              <Text style={styles.heroSideTextBelow}>Artificial Intelligence Video Management System</Text>
+              <Text style={[styles.heroTitle, isKeyboardVisible && styles.heroTitleCompact]}>AIVMS</Text>
+              <Text style={[styles.heroSideTextBelow, isKeyboardVisible && styles.heroSideTextBelowCompact]}>
+                Artificial Intelligence Video Management System
+              </Text>
+              {/* Aligned with AIVMS start line, vertically in between AIVMS and Card */}
+              <View style={[styles.heroTaglineBadge, isKeyboardVisible && { marginTop: 6 }]}>
+                <Icon name="flash" size={13} color="#0284c7" style={{ marginRight: 5 }} />
+                <Text style={styles.heroTaglineBadgeText}>Empowering Renewable Energy</Text>
+              </View>
             </View>
           </View>
 
           {/* Spacer between Hero and Login Card */}
-          <View style={{ height: 30 }} />
+          <View style={{ height: isKeyboardVisible ? 12 : 30 }} />
 
-          {/* Login Card */}
-          <View style={styles.card}>
+          {/* Login Card - Premium Glassmorphism */}
+          <View style={[styles.card, isKeyboardVisible && { marginBottom: 20 }]}>
+            {/* Header */}
             <View style={styles.cardHeaderRow}>
-              <View style={{ alignItems: 'center' }}>
-                <Text style={styles.welcomeText}>Welcome to STPL</Text>
-                <Text style={styles.pleaseLoginText}>Please login to continue</Text>
+              <View style={styles.headerUserIconContainer}>
+                <Icon name="account-outline" size={22} color="#0369a1" />
+              </View>
+              <View style={styles.headerTextCol}>
+                <Text style={styles.welcomeText}>Welcome Back</Text>
+                <Text style={styles.pleaseLoginText}>Login to your account</Text>
               </View>
             </View>
 
@@ -111,56 +158,86 @@ export const LoginScreen = ({ navigation }: any) => {
 
             {/* Username Input */}
             <View style={styles.inputContainer}>
-              <Icon name="account-outline" size={22} color="#135d9d" style={styles.inputIcon} />
-              <TextInput
-                value={username}
-                onChangeText={(v) => { setUsername(v); setError(''); }}
-                placeholder="Username"
-                placeholderTextColor="#6b7280"
-                style={styles.textInput}
-                autoCapitalize="none"
-                autoCorrect={false}
-                underlineColor="transparent"
-                activeUnderlineColor="transparent"
-                textColor="#111827"
-                cursorColor="#0252a3"
-                selectionColor="rgba(2, 82, 163, 0.3)"
-              />
+              <View style={styles.inputIconBox}>
+                <Icon name="account-outline" size={18} color="#0369a1" />
+              </View>
+              <View style={styles.inputTextWrap}>
+                <TextInput
+                  mode="flat"
+                  value={username}
+                  onChangeText={(v) => { setUsername(v); setError(''); }}
+                  placeholder="Username"
+                  placeholderTextColor="#5a8aab"
+                  style={styles.textInput}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  underlineStyle={{ display: 'none', height: 0 }}
+                  activeOutlineColor="transparent"
+                  outlineColor="transparent"
+                  textColor="#0c3a5c"
+                  cursorColor="#0369a1"
+                  selectionColor="rgba(3, 105, 161, 0.25)"
+                  contentStyle={{ paddingLeft: 0, paddingRight: 0 }}
+                  theme={{ colors: { background: 'transparent', surfaceVariant: 'transparent', onSurfaceVariant: 'transparent', primary: 'transparent' } }}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollTo({ y: 70, animated: true });
+                    }, 100);
+                  }}
+                />
+              </View>
             </View>
 
             {/* Password Input */}
             <View style={styles.inputContainer}>
-              <Icon name="lock-outline" size={22} color="#135d9d" style={styles.inputIcon} />
-              <TextInput
-                value={password}
-                onChangeText={(v) => { setPassword(v); setError(''); }}
-                placeholder="Password"
-                placeholderTextColor="#6b7280"
-                style={styles.textInput}
-                secureTextEntry={!showPass}
-                underlineColor="transparent"
-                activeUnderlineColor="transparent"
-                textColor="#111827"
-                cursorColor="#0252a3"
-                selectionColor="rgba(2, 82, 163, 0.3)"
-              />
+              <View style={styles.inputIconBox}>
+                <Icon name="lock-outline" size={17} color="#0369a1" />
+              </View>
+              <View style={styles.inputTextWrap}>
+                <TextInput
+                  mode="flat"
+                  value={password}
+                  onChangeText={(v) => { setPassword(v); setError(''); }}
+                  placeholder="Password"
+                  placeholderTextColor="#5a8aab"
+                  style={styles.textInput}
+                  secureTextEntry={!showPass}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  underlineStyle={{ display: 'none', height: 0 }}
+                  activeOutlineColor="transparent"
+                  outlineColor="transparent"
+                  textColor="#0c3a5c"
+                  cursorColor="#0369a1"
+                  selectionColor="rgba(3, 105, 161, 0.25)"
+                  contentStyle={{ paddingLeft: 0, paddingRight: 0 }}
+                  theme={{ colors: { background: 'transparent', surfaceVariant: 'transparent', onSurfaceVariant: 'transparent', primary: 'transparent' } }}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollTo({ y: 120, animated: true });
+                    }, 100);
+                  }}
+                />
+              </View>
               <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
-                <Icon name={showPass ? 'eye-outline' : 'eye-off-outline'} size={20} color="#6b7280" />
+                <Icon name={showPass ? 'eye-outline' : 'eye-off-outline'} size={19} color="#5a8aab" />
               </TouchableOpacity>
             </View>
 
-            {/* Primary Button */}
+            {/* Login Button */}
             <TouchableOpacity
               style={[styles.loginBtn, loading && { opacity: 0.7 }]}
               onPress={handleLogin}
               disabled={loading}
-              activeOpacity={0.85}
+              activeOpacity={0.82}
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
                 <>
-                  <Icon name="login" size={20} color="#ffffff" style={{ marginRight: 8 }} />
+                  <Icon name="login" size={19} color="#ffffff" style={{ marginRight: 8 }} />
                   <Text style={styles.loginBtnText}>Login</Text>
                 </>
               )}
@@ -170,9 +247,11 @@ export const LoginScreen = ({ navigation }: any) => {
 
 
           {/* Footer - Moved exactly to bottom with full width white bar */}
-          <View style={styles.footerContainer}>
-            <Text style={styles.footerCopyright}>© 2026 Shroti Telecom Private Limited. All Rights Reserved.</Text>
-          </View>
+          {!isKeyboardVisible && (
+            <View style={styles.footerContainer}>
+              <Text style={styles.footerCopyright}>© 2026 Shroti Telecom Private Limited. All Rights Reserved.</Text>
+            </View>
+          )}
 
         </ScrollView>
       </KeyboardAvoidingView>
@@ -202,21 +281,21 @@ const styles = StyleSheet.create({
   topBranding: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20, // Reduced since logo is gone
+    marginBottom: 16,
     paddingHorizontal: 24,
   },
   smallBrandLogo: {
-    width: 26,
-    height: 26,
-    marginRight: 8,
-    borderRadius: 13, // Crops the square white background into a perfect circle
+    width: 28,
+    height: 28,
+    marginRight: 10,
+    borderRadius: 14, // Crops the square white background into a perfect circle
+    backgroundColor: '#ffffff',
   },
   brandTitleSmall: {
-    fontSize: 14, // Slightly enlarged as requested
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '800',
     color: '#0f172a',
-    opacity: 0.75, // Subtle yet readable
-    letterSpacing: 0.4,
+    letterSpacing: 0.3,
   },
 
   // Hero (Inset)
@@ -229,6 +308,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     transform: [{ translateX: -60 }], // Shift logo further to the left
   },
+  logoContainerCompact: {
+    marginBottom: 8,
+    transform: [{ translateX: -60 }],
+  },
   whiteCircle: {
     width: 110,
     height: 110,
@@ -238,9 +321,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  whiteCircleCompact: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
   logoImage: {
     width: 125, // Restored/slightly larger to keep icon big while clipping the extra white space
     height: 125,
+  },
+  logoImageCompact: {
+    width: 68,
+    height: 68,
   },
   heroCol: {
     flexDirection: 'column',
@@ -260,53 +352,86 @@ const styles = StyleSheet.create({
     color: '#1e293b',
     marginTop: -4, // Bring it closer to AIVMS
   },
-
-  // Card (Inset)
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 24,
-    padding: 20,
-    marginHorizontal: 32,
+  heroTitleCompact: {
+    fontSize: 34,
+    letterSpacing: -0.5,
+  },
+  heroSideTextBelowCompact: {
+    fontSize: 12.5,
+    marginTop: -2,
+    lineHeight: 16,
+  },
+  heroTaglineBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.82)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    marginTop: 24,
+    borderWidth: 1.2,
+    borderColor: 'rgba(2, 82, 163, 0.22)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+    alignSelf: 'flex-start',
+  },
+  heroTaglineBadgeText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#0252a3',
+    letterSpacing: 0.3,
+  },
+
+  card: {
+    backgroundColor: 'transparent',
+    borderRadius: 22,
+    padding: 20,
+    paddingBottom: 22,
+    marginHorizontal: 30,
     marginBottom: 40,
   },
   cardHeaderRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
   },
-  shieldIconBg: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#eff6ff',
+  headerUserIconContainer: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    backgroundColor: 'rgba(3, 105, 161, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.45)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
+  headerTextCol: {
+    flexDirection: 'column',
+  },
   welcomeText: {
-    fontSize: 18,
+    fontSize: 21,
     fontWeight: '800',
-    color: '#0f172a',
+    color: '#0c3a5c',
+    letterSpacing: -0.3,
   },
   pleaseLoginText: {
-    fontSize: 13,
-    color: '#64748b',
+    fontSize: 12.5,
+    color: '#3b6d8c',
     marginTop: 2,
-    fontWeight: '500',
+    fontWeight: '600',
   },
 
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fef2f2',
+    backgroundColor: 'rgba(254, 242, 242, 0.88)',
     padding: 10,
-    borderRadius: 8,
-    marginBottom: 16,
+    borderRadius: 12,
+    marginBottom: 14,
     borderWidth: 1,
     borderColor: '#fecaca',
   },
@@ -317,49 +442,71 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Inputs
+  // Inputs — Clean frosted glass pills, no white patches
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'rgba(190, 228, 255, 0.42)',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 14,
-    marginBottom: 16,
-    height: 54,
-    paddingHorizontal: 16,
+    borderColor: 'rgba(255, 255, 255, 0.50)',
+    borderRadius: 16,
+    marginBottom: 12,
+    height: 52,
+    paddingHorizontal: 10,
+    overflow: 'hidden',
   },
-  inputIcon: {
-    marginRight: 12,
+  inputIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: 'rgba(3, 105, 161, 0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  inputTextWrap: {
+    flex: 1,
+    overflow: 'hidden',
+    backgroundColor: 'transparent',
   },
   textInput: {
     flex: 1,
     backgroundColor: 'transparent',
-    height: 50,
-    fontSize: 15,
+    height: 48,
+    fontSize: 14.5,
+    fontWeight: '600',
+    color: '#0c3a5c',
+    paddingHorizontal: 0,
+    margin: 0,
   },
   eyeBtn: {
     padding: 8,
+    marginRight: 0,
   },
 
-  // Button
+  // Login button — Centered professional capsule button (shorter width)
   loginBtn: {
-    backgroundColor: '#0252a3',
-    height: 54,
-    borderRadius: 14,
+    backgroundColor: '#0284c7',
+    height: 48,
+    borderRadius: 24,
+    alignSelf: 'center',
+    paddingHorizontal: 42,
+    minWidth: 170,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
-    shadowColor: '#0252a3',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.40)',
+    shadowColor: '#0284c7',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
     elevation: 4,
   },
   loginBtnText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 15.5,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
